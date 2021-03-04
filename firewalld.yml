@@ -1,0 +1,43 @@
+---
+  - hosts: webgroup
+    gather_facts: false
+    become: yes
+    remote_user: user
+
+    tasks:
+     
+     - name: Start firewalld`
+       service:
+          name: firewalld
+          state: started
+          enabled: yes
+
+     - name: enable service
+       firewalld:
+         service: http
+         permanent: yes
+         state: enabled
+
+     - name: enable port
+       firewalld:
+         port: "{{ item }}"
+         permanent: yes
+         state: enabled
+       with_items:
+        - 80/tcp
+        - 8081/tcp
+           
+
+     - name: enable zone
+       firewalld:
+         zone: docker
+         interface: docker0
+         permanent: yes
+         state: enabled
+
+     - name: reload service
+       systemd:
+         name: firewalld
+         state: reloaded    
+
+

@@ -1,0 +1,59 @@
+---
+  - hosts: webgroup
+    gather_facts: false
+    become: yes
+    remote_user: user
+
+    tasks: 
+     - name: install EPEL
+       yum:
+         name: epel-release
+         state: present
+
+     - name: install nginx
+       yum:
+         name: nginx
+         state: latest
+
+    # - name: Start service nginx
+      # become: true
+     #  service:
+      #    name: nginx
+      #    state: started
+      #    enabled: yes   
+      # tags: nginx         
+
+     - name: create folder
+       file:
+          path: /var/www/html/default
+          state: directory
+       tags: conf
+
+     - name: create index
+       become: true
+       template:
+          src: index.html.j2
+          dest: /var/www/html/default/index.html    
+       tags: conf
+
+     - name: change nginx.config     
+       template:
+         src: nginx.conf.j2
+         dest: /etc/opt/rh/rh-nginx116/nginx/conf.d/index.conf
+       notify:
+         - reload nginx
+       tags: conf  
+
+     - name: change hginx-ssl-zabbix config
+       template:
+        src: nginx.zabbix.j2
+        dest: /etc/opt/rh/rh-nginx116/nginx/conf.d/zabbix.conf  
+       notify:
+         - reload nginx
+       tags: conf  
+
+    handlers:
+         - name: reload nginx
+           service:
+              name: rh-nginx116-nginx
+              state: reloaded     

@@ -1,0 +1,43 @@
+---
+  - hosts: webgroup
+    gather_facts: false
+    become: yes
+    remote_user: user
+
+    tasks:
+      - name: Pull an image
+        docker_image:
+          name: jenkins/jenkins:lts
+          #name: jenkinsci/blueocean
+          source: pull  
+      - docker_compose:
+          project_name: jenkins
+          definition:
+           version: '3.7'
+           volumes:
+            jenkins_home:
+           services:
+            jenkins:
+                image: jenkins/jenkins:lts
+                restart: always
+                privileged: true
+                user: root
+                container_name: "jenkins"
+                volumes:
+                  - /home/user/jenkins/jenkins_home/:/var/jenkins_home
+                  - /var/run/docker.sock:/var/run/docker.sock:rw
+                  - /usr/bin/docker:/usr/bin/docker  
+                ports:
+                  - "8081:8080"
+                  - "50000:50000" 
+                 # - "22:22" 
+                    #depends_on:
+                    # - pg_db      
+        register: output
+      - name: create a network
+        docker_network:
+           name: jenkins-network_docker
+           connected:
+             - jenkins
+           driver: bridge
+           appends: yes

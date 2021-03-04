@@ -1,0 +1,51 @@
+---
+  - hosts: webgroup
+    gather_facts: false
+    become: yes
+    remote_user: user
+
+    tasks: 
+     - name: install yum utils
+       yum: 
+        name: yum-utils
+        state: latest
+
+     - name: Add docker repo
+       get_url:
+         url: https://download.docker.com/linux/centos/docker-ce.repo
+         dest: /etc/yum.repos.d/docer-ce.repo
+       tags: docker  
+
+     - name: install docker
+       yum:
+         name: docker-ce
+         state: present
+       tags: docker  
+
+     - name: Start docker service
+       service:
+          name: docker
+          state: started
+          enabled: yes    
+       tags: docker     
+
+     - name: Add users to docker group
+       user:
+          name: "{{ item }}"
+          groups: docker
+          append: yes
+       with_items:
+            - vsurov
+            - srubizova
+            - asagitov
+            - asokova 
+            - user
+       tags: docker     
+
+     - name: install docker-compose
+       get_url:
+         url: https://github.com/docker/compose/releases/download/1.25.1-rc1/docker-compose-Linux-x86_64
+         dest: /usr/local/bin/docker-compose
+         mode: 'ugo+x'
+       tags: compose    
+

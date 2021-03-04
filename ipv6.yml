@@ -1,0 +1,58 @@
+---
+  - hosts: webgroup
+    gather_facts: false
+    become: yes
+    remote_user: user
+
+    tasks:
+
+     - name: Disable IPv6 default in sysctl
+       sysctl:
+         name: net.ipv6.conf.default.disable_ipv6
+         value: '1'
+         state: present
+         reload: yes
+ 
+     - name: Disable IPv6 on all interfaces in sysctl
+       sysctl:
+         name: net.ipv6.conf.all.disable_ipv6
+         value: '1'
+         state: present
+         reload: yes
+ 
+     - name: Disable IPv4 redirects accept in sysctl
+       sysctl:
+         name: net.ipv4.conf.all.accept_redirects
+         value: '0'
+         state: present
+         reload: yes
+ 
+     - name: Disable IPv4 redirects send in sysctl
+       sysctl:
+         name: net.ipv4.conf.all.send_redirects
+         value: '0'
+         state: present
+         reload: yes
+
+     #- name: restart network
+      # service:
+       #   name: network
+        #  state: restarted
+
+    # - name: Start docker service
+     #  service:
+      #    name: docker
+       #   state: restarted
+        
+
+     - name: restart networkManager
+       service:
+          name: NetworkManager   
+          state: restarted
+
+     
+     
+     
+     
+     
+       

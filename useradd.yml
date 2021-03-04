@@ -1,0 +1,83 @@
+---
+  - hosts: webgroup
+    gather_facts: false
+    become: yes
+    remote_user: user
+
+    tasks:
+     - name: User add.
+       user:
+             name: "{{ item.name }}"
+             password: "{{ item.password | password_hash('sha512') }}"
+             update_password: always
+             state: present
+             shell: /bin/bash
+       with_items:
+         - { name: srubizova, password: qwerty }
+         - { name: vsurov, password: pass }
+         - { name: asagitov, password: passw }
+         - { name: asokova, password: qwert }      
+       tags: user   
+
+     - name: Allow 'wheel' group to have passwordless sudo
+       lineinfile:
+             dest: /etc/sudoers
+             state: present
+             regexp: '^%wheel\s'
+             line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+       tags: user      
+
+               
+     - name: Set authorized key taken from file my pub_key
+       authorized_key:
+         user: "{{ item }}"
+         state: present
+         key: "{{ lookup('file', '/home/user-admin/.ssh/id_rsa.pub') }}" 
+       with_items:
+        - vsurov
+        - srubizova
+        - asagitov
+        - asokova  
+       tags: key  
+
+     - name: Set authorized key taken from file for user vsurov
+       authorized_key:
+        user: vsurov
+        state: present
+        key: "{{ lookup('file', '/home/user-admin/.ssh/pub_keys/vsurov_rsa.pub') }}" 
+       tags: vsurov 
+
+     - name: Set authorized key taken from file for user asagitov
+       authorized_key:
+        user: asagitov
+        state: present
+        key: "{{ lookup('file', '/home/user-admin/.ssh/pub_keys/asagitov.rsa.pub') }}" 
+       tags: asagitov    
+   
+     - name: Set authorized key taken from file for user asokova
+       authorized_key:
+        user: asokova
+        state: present
+        key: "{{ lookup('file', '/home/user-admin/.ssh/pub_keys/asokova.rsa.pub') }}" 
+       tags: asokova    
+   
+     - name: Set a hostname
+       hostname:
+        name: zabbix.centos.ru
+       tags: hostname    
+
+     - name: Root login is not allowed for ssh
+       lineinfile:
+             dest: /etc/ssh/sshd_config
+             state: present
+             regexp: '^PermitRootLogin'
+             line: 'PermitRootLogin No'  
+       tags: root 
+   
+     - name: Restart ssh
+       service:
+          name: sshd
+          state: restarted
+       tags: root   
+   
+         
